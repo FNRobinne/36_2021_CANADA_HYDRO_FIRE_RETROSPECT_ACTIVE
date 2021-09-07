@@ -33,14 +33,26 @@ memory.limit(30000000)     # this is needed on some PCs to increase memory allow
 library(tidyverse)
 library(tidyhydat)
 
+# Load data ---------------------------------------------------------------
+
+
+
 # Retrieve HYDAT stations -------------------------------------------------
 
 # Get stations for western Canadian provinces and territories
 # Namely: British Columbia (BC), Alberta (AB), Yukon (YK), and Northwest Territories (NT)
 west_stns <- hy_stations() %>%
   filter(PROV_TERR_STATE_LOC == "BC" | PROV_TERR_STATE_LOC == "BC" | PROV_TERR_STATE_LOC == "YK" | PROV_TERR_STATE_LOC == "NT" ) %>%
-  pull_station_number()
+  pull_station_number() %>%
+  hy_stn_data_range() %>%
+  filter(DATA_TYPE == "Q") %>%
+  filter(Year_from <= 1981 & Year_to >= 1987) %>% # 5 year window before and 3 year window after fire severity data are available (1985)
+  pull_station_number() %>%
+  hy_stn_regulation() %>%
+  filter(REGULATED == "FALSE") %>%
+  pull_station_number() # This gets the list of station ID of interest
+
+west_stns_lonlat <- hy_stations(west_stns) %>%
+  select(STATION_NUMBER, STATION_NAME, LATITUDE, LONGITUDE) # This fetches the location in longitude/latitude of stations 
 
 
-# Disconnect from HYDAT
-hy_src_disconnect()
